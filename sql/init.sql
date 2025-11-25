@@ -4,6 +4,13 @@
 -- 创建日期: 2025-11-25
 -- ============================================
 
+-- 设置字符编码（解决中文乱码问题）
+SET NAMES utf8mb4;
+SET CHARACTER SET utf8mb4;
+SET character_set_connection = utf8mb4;
+SET character_set_results = utf8mb4;
+SET character_set_client = utf8mb4;
+
 -- 创建数据库
 CREATE DATABASE IF NOT EXISTS study_planner 
 DEFAULT CHARACTER SET utf8mb4 
@@ -11,18 +18,36 @@ DEFAULT COLLATE utf8mb4_unicode_ci;
 
 USE study_planner;
 
+-- 设置当前数据库的字符集
+SET NAMES utf8mb4;
+
+-- ============================================
+-- 删除已存在的表（注意顺序：先删除有外键依赖的子表）
+-- ============================================
+SET FOREIGN_KEY_CHECKS = 0;
+
+DROP TABLE IF EXISTS `chat_history`;
+DROP TABLE IF EXISTS `check_in`;
+DROP TABLE IF EXISTS `plan_detail`;
+DROP TABLE IF EXISTS `study_plan`;
+DROP TABLE IF EXISTS `user`;
+
+DROP VIEW IF EXISTS `v_user_study_stats`;
+DROP VIEW IF EXISTS `v_plan_progress`;
+
+SET FOREIGN_KEY_CHECKS = 1;
+
 -- ============================================
 -- 1. 用户表 (user)
 -- ============================================
-DROP TABLE IF EXISTS `user`;
 CREATE TABLE `user` (
     `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '用户ID',
     `username` VARCHAR(50) NOT NULL COMMENT '用户名',
     `password` VARCHAR(255) NOT NULL COMMENT '密码（加密存储）',
     `email` VARCHAR(100) DEFAULT NULL COMMENT '邮箱',
     `avatar` VARCHAR(255) DEFAULT NULL COMMENT '头像URL',
-    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_username` (`username`),
     UNIQUE KEY `uk_email` (`email`)
@@ -31,20 +56,19 @@ CREATE TABLE `user` (
 -- ============================================
 -- 2. 学习计划表 (study_plan)
 -- ============================================
-DROP TABLE IF EXISTS `study_plan`;
 CREATE TABLE `study_plan` (
     `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '计划ID',
     `user_id` BIGINT NOT NULL COMMENT '用户ID',
     `title` VARCHAR(100) NOT NULL COMMENT '计划标题',
     `goal` TEXT NOT NULL COMMENT '学习目标描述',
-    `level` VARCHAR(20) NOT NULL DEFAULT '零基础' COMMENT '基础水平(零基础/初级/中级/高级)',
-    `daily_hours` DECIMAL(3,1) NOT NULL DEFAULT 2.0 COMMENT '每日学习时长(小时)',
-    `total_days` INT NOT NULL DEFAULT 30 COMMENT '计划总天数',
+    `level` VARCHAR(20) DEFAULT '零基础' COMMENT '基础水平(零基础/初级/中级/高级)',
+    `daily_hours` DECIMAL(3,1) DEFAULT 2.0 COMMENT '每日学习时长(小时)',
+    `total_days` INT DEFAULT 30 COMMENT '计划总天数',
     `start_date` DATE NOT NULL COMMENT '开始日期',
     `end_date` DATE NOT NULL COMMENT '结束日期',
-    `status` VARCHAR(20) NOT NULL DEFAULT '进行中' COMMENT '状态(进行中/已完成/已放弃)',
-    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `status` VARCHAR(20) DEFAULT '进行中' COMMENT '状态(进行中/已完成/已放弃)',
+    `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     PRIMARY KEY (`id`),
     KEY `idx_user_id` (`user_id`),
     KEY `idx_status` (`status`),
@@ -54,16 +78,15 @@ CREATE TABLE `study_plan` (
 -- ============================================
 -- 3. 计划详情表 (plan_detail) - 每日任务
 -- ============================================
-DROP TABLE IF EXISTS `plan_detail`;
 CREATE TABLE `plan_detail` (
     `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '详情ID',
     `plan_id` BIGINT NOT NULL COMMENT '计划ID',
     `day_number` INT NOT NULL COMMENT '第几天',
     `content` TEXT NOT NULL COMMENT '学习内容',
-    `duration` DECIMAL(3,1) NOT NULL DEFAULT 2.0 COMMENT '预计时长(小时)',
+    `duration` DECIMAL(3,1) DEFAULT 2.0 COMMENT '预计时长(小时)',
     `resources` TEXT DEFAULT NULL COMMENT '推荐资源(JSON格式)',
-    `is_completed` TINYINT NOT NULL DEFAULT 0 COMMENT '是否完成(0-未完成/1-已完成)',
-    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `is_completed` TINYINT DEFAULT 0 COMMENT '是否完成(0-未完成/1-已完成)',
+    `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     PRIMARY KEY (`id`),
     KEY `idx_plan_id` (`plan_id`),
     KEY `idx_day_number` (`day_number`),
@@ -73,7 +96,6 @@ CREATE TABLE `plan_detail` (
 -- ============================================
 -- 4. 打卡记录表 (check_in)
 -- ============================================
-DROP TABLE IF EXISTS `check_in`;
 CREATE TABLE `check_in` (
     `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '打卡ID',
     `user_id` BIGINT NOT NULL COMMENT '用户ID',
@@ -82,7 +104,7 @@ CREATE TABLE `check_in` (
     `check_date` DATE NOT NULL COMMENT '打卡日期',
     `study_hours` DECIMAL(3,1) DEFAULT NULL COMMENT '实际学习时长(小时)',
     `note` TEXT DEFAULT NULL COMMENT '学习心得',
-    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     PRIMARY KEY (`id`),
     KEY `idx_user_id` (`user_id`),
     KEY `idx_plan_id` (`plan_id`),
@@ -96,13 +118,12 @@ CREATE TABLE `check_in` (
 -- ============================================
 -- 5. AI对话记录表 (chat_history)
 -- ============================================
-DROP TABLE IF EXISTS `chat_history`;
 CREATE TABLE `chat_history` (
     `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '记录ID',
     `user_id` BIGINT NOT NULL COMMENT '用户ID',
     `question` TEXT NOT NULL COMMENT '用户问题',
     `answer` TEXT NOT NULL COMMENT 'AI回答',
-    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     PRIMARY KEY (`id`),
     KEY `idx_user_id` (`user_id`),
     CONSTRAINT `fk_chat_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE
@@ -163,4 +184,4 @@ GROUP BY sp.id, sp.title, sp.user_id, sp.total_days;
 -- ============================================
 -- 完成
 -- ============================================
-SELECT '数据库初始化完成！' AS message;
+SELECT '数据库初始化完成！Database initialization completed!' AS message;
