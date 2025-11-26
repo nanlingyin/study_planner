@@ -2,13 +2,16 @@ package com.studyplanner.controller;
 
 import com.studyplanner.dto.ApiResponse;
 import com.studyplanner.dto.LoginRequest;
+import com.studyplanner.dto.ProfileUpdateRequest;
 import com.studyplanner.dto.RegisterRequest;
 import com.studyplanner.entity.User;
+import com.studyplanner.service.FileUploadService;
 import com.studyplanner.service.UserService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 用户控制器
@@ -19,6 +22,9 @@ public class UserController {
     
     @Autowired
     private UserService userService;
+    
+    @Autowired
+    private FileUploadService fileUploadService;
     
     /**
      * 用户注册
@@ -116,5 +122,44 @@ public class UserController {
         public void setOldPassword(String oldPassword) { this.oldPassword = oldPassword; }
         public String getNewPassword() { return newPassword; }
         public void setNewPassword(String newPassword) { this.newPassword = newPassword; }
+    }
+    
+    /**
+     * 上传头像
+     */
+    @PostMapping("/avatar")
+    public ApiResponse<User> uploadAvatar(@RequestParam("file") MultipartFile file, HttpSession session) {
+        Long userId = (Long) session.getAttribute("userId");
+        if (userId == null) {
+            return ApiResponse.unauthorized("请先登录");
+        }
+        
+        try {
+            // 上传文件并获取URL
+            String avatarUrl = fileUploadService.uploadAvatar(file, userId);
+            // 更新用户头像
+            User user = userService.updateAvatar(userId, avatarUrl);
+            return ApiResponse.success("头像上传成功", user);
+        } catch (Exception e) {
+            return ApiResponse.error(e.getMessage());
+        }
+    }
+    
+    /**
+     * 更新个人资料
+     */
+    @PutMapping("/profile")
+    public ApiResponse<User> updateProfile(@RequestBody ProfileUpdateRequest request, HttpSession session) {
+        Long userId = (Long) session.getAttribute("userId");
+        if (userId == null) {
+            return ApiResponse.unauthorized("请先登录");
+        }
+        
+        try {
+            User user = userService.updateProfile(userId, request.getEmail());
+            return ApiResponse.success("资料更新成功", user);
+        } catch (Exception e) {
+            return ApiResponse.error(e.getMessage());
+        }
     }
 }

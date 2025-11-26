@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人资料 - 智能学习计划生成器</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="../css/style.css" rel="stylesheet">
+    <style>
+        .avatar-container {
+            position: relative;
+            width: 150px;
+            height: 150px;
+            margin: 0 auto 20px;
+        }
+        .avatar-img {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid #fff;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .avatar-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            top: 0;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s;
+            cursor: pointer;
+        }
+        .avatar-container:hover .avatar-overlay {
+            opacity: 1;
+        }
+        .avatar-overlay i {
+            color: white;
+            font-size: 2rem;
+        }
+        .profile-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            padding: 40px 30px;
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .profile-card h4 {
+            margin-top: 15px;
+            font-weight: 600;
+        }
+        .profile-card p {
+            opacity: 0.9;
+            margin-bottom: 0;
+        }
+        .info-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .info-item {
+            display: flex;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .info-item:last-child {
+            border-bottom: none;
+        }
+        .info-item i {
+            font-size: 1.5rem;
+            color: #667eea;
+            width: 40px;
+        }
+        .info-item .label {
+            color: #888;
+            font-size: 0.9rem;
+        }
+        .info-item .value {
+            font-weight: 500;
+            color: #333;
+        }
+        .btn-edit {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            color: white;
+            font-weight: 500;
+        }
+        .btn-edit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+            color: white;
+        }
+        .upload-progress {
+            display: none;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="../index.html">
+                <i class="bi bi-journal-bookmark-fill me-2"></i>智能学习计划生成器
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="dashboard.html">个人中心</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="create-plan.html">创建计划</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="my-plans.html">我的计划</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="ai-assistant.html">AI助手</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="profile.html">
+                            <i class="bi bi-person-circle me-1"></i>
+                            <span id="navUsername">个人资料</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="logout()">
+                            <i class="bi bi-box-arrow-right me-1"></i>退出
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <!-- 个人资料卡片 -->
+                <div class="profile-card">
+                    <div class="avatar-container">
+                        <img id="avatarImg" src="https://via.placeholder.com/150" alt="头像" class="avatar-img">
+                        <div class="avatar-overlay" onclick="document.getElementById('avatarInput').click()">
+                            <i class="bi bi-camera"></i>
+                        </div>
+                        <input type="file" id="avatarInput" accept="image/*" style="display: none;" onchange="uploadAvatar(this)">
+                    </div>
+                    <div class="upload-progress" id="uploadProgress">
+                        <div class="progress" style="height: 5px;">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: 100%"></div>
+                        </div>
+                        <small>上传中...</small>
+                    </div>
+                    <h4 id="profileUsername">加载中...</h4>
+                    <p id="profileEmail">加载中...</p>
+                </div>
+
+                <!-- 详细信息卡片 -->
+                <div class="info-card">
+                    <h5 class="mb-4"><i class="bi bi-person-lines-fill me-2"></i>基本信息</h5>
+                    
+                    <div class="info-item">
+                        <i class="bi bi-person"></i>
+                        <div class="flex-grow-1">
+                            <div class="label">用户名</div>
+                            <div class="value" id="infoUsername">-</div>
+                        </div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <i class="bi bi-envelope"></i>
+                        <div class="flex-grow-1">
+                            <div class="label">邮箱</div>
+                            <div class="value" id="infoEmail">-</div>
+                        </div>
+                        <button class="btn btn-sm btn-outline-primary" onclick="showEditEmailModal()">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="info-item">
+                        <i class="bi bi-calendar"></i>
+                        <div class="flex-grow-1">
+                            <div class="label">注册时间</div>
+                            <div class="value" id="infoCreateTime">-</div>
+                        </div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <i class="bi bi-shield-lock"></i>
+                        <div class="flex-grow-1">
+                            <div class="label">密码</div>
+                            <div class="value">••••••••</div>
+                        </div>
+                        <button class="btn btn-sm btn-outline-primary" onclick="showChangePasswordModal()">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 编辑邮箱模态框 -->
+    <div class="modal fade" id="editEmailModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-envelope me-2"></i>修改邮箱</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editEmailForm">
+                        <div class="mb-3">
+                            <label class="form-label">新邮箱</label>
+                            <input type="email" class="form-control" id="newEmail" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="updateEmail()">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 修改密码模态框 -->
+    <div class="modal fade" id="changePasswordModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-shield-lock me-2"></i>修改密码</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="changePasswordForm">
+                        <div class="mb-3">
+                            <label class="form-label">当前密码</label>
+                            <input type="password" class="form-control" id="oldPassword" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">新密码</label>
+                            <input type="password" class="form-control" id="newPassword" required minlength="6">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">确认新密码</label>
+                            <input type="password" class="form-control" id="confirmPassword" required minlength="6">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="changePassword()">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../js/common.js"></script>
+    <script>
+        let profileUser = null;
+        
+        // 页面加载时检查登录状态
+        document.addEventListener('DOMContentLoaded', async function() {
+            const user = await checkLogin();
+            if (!user) {
+                window.location.href = 'login.html?redirect=' + encodeURIComponent(window.location.href);
+                return;
+            }
+            loadUserProfile();
+        });
+        
+        // 加载用户资料
+        async function loadUserProfile() {
+            try {
+                const response = await apiRequest('/user/info');
+                if (response && response.code === 200) {
+                    profileUser = response.data;
+                    displayUserProfile(profileUser);
+                } else {
+                    showToast(response?.message || '加载失败', 'error');
+                }
+            } catch (error) {
+                console.error('加载失败:', error);
+                showToast('加载用户资料失败', 'error');
+            }
+        }
+        
+        // 显示用户资料
+        function displayUserProfile(user) {
+            if (!user) return;
+            
+            // 更新头像
+            if (user.avatar) {
+                document.getElementById('avatarImg').src = user.avatar;
+            } else {
+                // 使用默认头像（首字母）
+                document.getElementById('avatarImg').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username)}&size=150&background=667eea&color=fff`;
+            }
+            
+            // 更新资料卡片
+            document.getElementById('profileUsername').textContent = user.username;
+            document.getElementById('profileEmail').textContent = user.email || '未设置邮箱';
+            
+            // 更新详细信息
+            document.getElementById('infoUsername').textContent = user.username;
+            document.getElementById('infoEmail').textContent = user.email || '未设置';
+            document.getElementById('infoCreateTime').textContent = formatDateTime(user.createTime);
+            
+            // 更新导航栏用户名
+            const navUsername = document.getElementById('navUsername');
+            if (navUsername) {
+                navUsername.textContent = user.username;
+            }
+            
+            // 填充编辑表单
+            document.getElementById('newEmail').value = user.email || '';
+        }
+        
+        // 上传头像
+        async function uploadAvatar(input) {
+            const file = input.files[0];
+            if (!file) return;
+            
+            // 验证文件类型
+            if (!file.type.startsWith('image/')) {
+                showToast('请选择图片文件', 'warning');
+                return;
+            }
+            
+            // 验证文件大小（5MB）
+            if (file.size > 5 * 1024 * 1024) {
+                showToast('图片大小不能超过5MB', 'warning');
+                return;
+            }
+            
+            // 显示上传进度
+            document.getElementById('uploadProgress').style.display = 'block';
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                const response = await fetch('/api/user/avatar', {
+                    method: 'POST',
+                    credentials: 'include',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.code === 200) {
+                    showToast('头像上传成功', 'success');
+                    // 更新显示
+                    document.getElementById('avatarImg').src = result.data.avatar + '?t=' + Date.now();
+                    profileUser = result.data;
+                } else {
+                    showToast(result.message || '上传失败', 'error');
+                }
+            } catch (error) {
+                console.error('上传失败:', error);
+                showToast('上传失败: ' + error.message, 'error');
+            } finally {
+                document.getElementById('uploadProgress').style.display = 'none';
+                input.value = ''; // 清空input，允许重复选择同一文件
+            }
+        }
+        
+        // 显示编辑邮箱模态框
+        function showEditEmailModal() {
+            document.getElementById('newEmail').value = profileUser?.email || '';
+            new bootstrap.Modal(document.getElementById('editEmailModal')).show();
+        }
+        
+        // 更新邮箱
+        async function updateEmail() {
+            const email = document.getElementById('newEmail').value.trim();
+            
+            if (!email) {
+                showToast('请输入邮箱', 'warning');
+                return;
+            }
+            
+            // 简单的邮箱格式验证
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                showToast('请输入有效的邮箱地址', 'warning');
+                return;
+            }
+            
+            try {
+                const response = await apiRequest('/user/profile', {
+                    method: 'PUT',
+                    body: JSON.stringify({ email: email })
+                });
+                
+                if (response && response.code === 200) {
+                    showToast('邮箱更新成功', 'success');
+                    profileUser = response.data;
+                    displayUserProfile(profileUser);
+                    bootstrap.Modal.getInstance(document.getElementById('editEmailModal')).hide();
+                } else {
+                    showToast(response?.message || '更新失败', 'error');
+                }
+            } catch (error) {
+                console.error('更新失败:', error);
+                showToast('更新失败', 'error');
+            }
+        }
+        
+        // 显示修改密码模态框
+        function showChangePasswordModal() {
+            document.getElementById('changePasswordForm').reset();
+            new bootstrap.Modal(document.getElementById('changePasswordModal')).show();
+        }
+        
+        // 修改密码
+        async function changePassword() {
+            const oldPassword = document.getElementById('oldPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            if (!oldPassword || !newPassword || !confirmPassword) {
+                showToast('请填写所有密码字段', 'warning');
+                return;
+            }
+            
+            if (newPassword.length < 6) {
+                showToast('新密码长度至少6位', 'warning');
+                return;
+            }
+            
+            if (newPassword !== confirmPassword) {
+                showToast('两次输入的新密码不一致', 'warning');
+                return;
+            }
+            
+            try {
+                const response = await apiRequest('/user/password', {
+                    method: 'PUT',
+                    body: JSON.stringify({
+                        oldPassword: oldPassword,
+                        newPassword: newPassword
+                    })
+                });
+                
+                if (response && response.code === 200) {
+                    showToast('密码修改成功', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('changePasswordModal')).hide();
+                    document.getElementById('changePasswordForm').reset();
+                } else {
+                    showToast(response?.message || '修改失败', 'error');
+                }
+            } catch (error) {
+                console.error('修改失败:', error);
+                showToast('修改失败', 'error');
+            }
+        }
+    </script>
+</body>
+</html>

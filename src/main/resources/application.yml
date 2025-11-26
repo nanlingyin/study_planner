@@ -50,6 +50,18 @@ llm:
       - deepseek-ai/DeepSeek-V3
       - deepseek-ai/DeepSeek-R1-0528
 
+# 文件上传配置
+file:
+  upload:
+    path: uploads  # 上传文件存储目录
+    url-prefix: /uploads  # 访问URL前缀
+
+# Spring文件上传限制
+spring.servlet.multipart:
+  enabled: true
+  max-file-size: 5MB
+  max-request-size: 10MB
+
 # 日志配置
 logging:
   level:

@@ -86,6 +86,36 @@ public class UserService {
     }
     
     /**
+     * 更新头像
+     */
+    public User updateAvatar(Long userId, String avatarUrl) {
+        userMapper.updateAvatar(userId, avatarUrl);
+        return getUserById(userId);
+    }
+    
+    /**
+     * 更新个人资料
+     */
+    public User updateProfile(Long userId, String email) {
+        User user = userMapper.findById(userId);
+        if (user == null) {
+            throw new RuntimeException("用户不存在");
+        }
+        
+        // 检查邮箱是否被其他用户使用
+        if (email != null && !email.equals(user.getEmail())) {
+            User existingUser = userMapper.findByEmail(email);
+            if (existingUser != null && !existingUser.getId().equals(userId)) {
+                throw new RuntimeException("该邮箱已被其他用户使用");
+            }
+        }
+        
+        user.setEmail(email);
+        userMapper.update(user);
+        return getUserById(userId);
+    }
+    
+    /**
      * 修改密码
      */
     public void changePassword(Long userId, String oldPassword, String newPassword) {

@@ -86,6 +86,9 @@ mvn spring-boot:run
 - `POST /api/user/login` - 用户登录
 - `POST /api/user/logout` - 用户登出
 - `GET /api/user/info` - 获取用户信息
+- `POST /api/user/avatar` - 上传用户头像
+- `PUT /api/user/profile` - 更新个人资料
+- `PUT /api/user/password` - 修改密码
 
 ### 计划接口
 - `POST /api/plan/generate` - AI生成计划
@@ -112,18 +115,30 @@ mvn spring-boot:run
 ## 📝 开发日志
 
 - 2025-11-25: 项目初始化，完成框架搭建，完成计划清单，初步工作分配
+- 2025-11-26: 
+  - **fix:** SQL初始化脚本编码问题，添加 `SET NAMES utf8mb4` 解决中文乱码
+  - **fix:** SQL初始化脚本表删除顺序问题，添加 `SET FOREIGN_KEY_CHECKS = 0` 避免外键约束错误
+  - **fix:** SQL初始化脚本DEFAULT值语法错误，移除带DEFAULT的字段的NOT NULL约束
+  - **fix:** 个人资料页面API路径重复问题 (`/api/api/...` -> `/api/...`)
+  - **fix:** 文件上传路径错误，头像保存到Tomcat临时目录的问题，改用项目绝对路径
+  - **add:** 用户头像上传功能 (`POST /api/user/avatar`)
+  - **add:** 个人资料编辑功能 (`PUT /api/user/profile`)
+  - **add:** 密码修改功能 (`PUT /api/user/password`)
+  - **add:** 个人资料管理页面 (`/pages/profile.html`)
+  - **add:** 文件上传配置类 `FileUploadConfig.java`
+  - **add:** 文件上传服务 `FileUploadService.java`
 
 
 - ## 计划清单
 
 - 已完成的功能，麻烦LynngNAN填写✅ Completed
 - 多语言支持-一键中英文翻译（最后进行）
-- “重要/紧急计划”置顶 (🚧 In Progress)
+- "重要/紧急计划"置顶 (🚧 In Progress)
 - 新增：删除/编辑计划功能
-- “多学会儿”功能-考虑调整一天只能打卡一次的限制，提前学习打卡后续任务
-- “闲置计划”提醒功能-超过3日未打卡该计划自动提醒
+- "多学会儿"功能-考虑调整一天只能打卡一次的限制，提前学习打卡后续任务
+- "闲置计划"提醒功能-超过3日未打卡该计划自动提醒
 - 学习论坛-供大家交流心得的平台
-- 新增用户个性化：头像上传、个人资料编辑
+- ~~新增用户个性化：头像上传、个人资料编辑~~ ✅ Completed (2025-11-26)
 - 学习进度可视化：周/月完成率图表（用 ECharts/Chart.js，简单又直观）
 - 考虑可以把已学习的内容左侧深蓝色色块-->绿色/其他颜色做一个颜色区分
 
