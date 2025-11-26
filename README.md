@@ -121,6 +121,8 @@ mvn spring-boot:run
   - **fix:** SQL初始化脚本DEFAULT值语法错误，移除带DEFAULT的字段的NOT NULL约束
   - **fix:** 个人资料页面API路径重复问题 (`/api/api/...` -> `/api/...`)
   - **fix:** 文件上传路径错误，头像保存到Tomcat临时目录的问题，改用项目绝对路径
+  - **fix:** 打卡学习时长固定为2小时的问题，现在使用计划设定的每日学习时长
+  - **fix:** AI助手输出渲染问题，添加Markdown解析和代码高亮支持
   - **add:** 用户头像上传功能 (`POST /api/user/avatar`)
   - **add:** 个人资料编辑功能 (`PUT /api/user/profile`)
   - **add:** 密码修改功能 (`PUT /api/user/password`)
@@ -141,10 +143,9 @@ mvn spring-boot:run
 - ~~新增用户个性化：头像上传、个人资料编辑~~ ✅ Completed (2025-11-26)
 - 学习进度可视化：周/月完成率图表（用 ECharts/Chart.js，简单又直观）
 - 考虑可以把已学习的内容左侧深蓝色色块-->绿色/其他颜色做一个颜色区分
-
-- AI学习助手输出渲染问题 🐛bug
-- 学习进度不同步的的问题 🐛bug
-- 修改后的每日学习时间同步问题，需要检查一下变量名和累加逻辑 🐛bug
+- 我的计划页面展示单项计划的学习进度不同步 🐛bug
+- ~~AI学习助手输出渲染问题~~ ✅ Fixed (2025-11-26) - 添加Markdown渲染和代码高亮
+- ~~修改后的每日学习时间同步问题~~ ✅ Fixed (2025-11-26) - 修复studyHours参数传递
 
 ## 📄 License
 

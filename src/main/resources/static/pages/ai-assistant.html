@@ -7,6 +7,16 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
     <link href="../css/style.css" rel="stylesheet">
+    <!-- 引入marked.js用于Markdown渲染 -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- 引入highlight.js用于代码高亮 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/core.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/javascript.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/python.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/java.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/css.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/sql.min.js"></script>
     <style>
         .chat-container {
             height: calc(100vh - 250px);
@@ -53,7 +63,7 @@
             max-width: 70%;
             padding: 12px 16px;
             border-radius: 15px;
-            line-height: 1.5;
+            line-height: 1.6;
         }
         .message.user .message-content {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -65,6 +75,72 @@
             color: #333;
             border-bottom-left-radius: 5px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        /* Markdown渲染样式 */
+        .message.assistant .message-content p {
+            margin-bottom: 0.5rem;
+        }
+        .message.assistant .message-content p:last-child {
+            margin-bottom: 0;
+        }
+        .message.assistant .message-content ul,
+        .message.assistant .message-content ol {
+            margin: 0.5rem 0;
+            padding-left: 1.5rem;
+        }
+        .message.assistant .message-content li {
+            margin-bottom: 0.25rem;
+        }
+        .message.assistant .message-content code {
+            background: #f1f1f1;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9em;
+            color: #e83e8c;
+        }
+        .message.assistant .message-content pre {
+            background: #282c34;
+            border-radius: 8px;
+            padding: 12px;
+            margin: 0.5rem 0;
+            overflow-x: auto;
+        }
+        .message.assistant .message-content pre code {
+            background: transparent;
+            color: #abb2bf;
+            padding: 0;
+            font-size: 0.85em;
+        }
+        .message.assistant .message-content blockquote {
+            border-left: 4px solid #667eea;
+            margin: 0.5rem 0;
+            padding-left: 1rem;
+            color: #666;
+        }
+        .message.assistant .message-content h1,
+        .message.assistant .message-content h2,
+        .message.assistant .message-content h3 {
+            margin-top: 0.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        .message.assistant .message-content h1 { font-size: 1.3em; }
+        .message.assistant .message-content h2 { font-size: 1.2em; }
+        .message.assistant .message-content h3 { font-size: 1.1em; }
+        .message.assistant .message-content table {
+            border-collapse: collapse;
+            margin: 0.5rem 0;
+            width: 100%;
+        }
+        .message.assistant .message-content th,
+        .message.assistant .message-content td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        .message.assistant .message-content th {
+            background: #f5f5f5;
         }
         .chat-input-area {
             padding: 20px;
@@ -433,6 +509,20 @@
             }
         }
 
+        // 配置marked选项
+        marked.setOptions({
+            highlight: function(code, lang) {
+                if (lang && hljs.getLanguage(lang)) {
+                    try {
+                        return hljs.highlight(code, { language: lang }).value;
+                    } catch (e) {}
+                }
+                return code;
+            },
+            breaks: true,
+            gfm: true
+        });
+
         function addMessage(content, type) {
             const messagesContainer = document.getElementById('chatMessages');
             const messageDiv = document.createElement('div');
@@ -442,8 +532,19 @@
                 '<i class="bi bi-person"></i>' : 
                 '<i class="bi bi-robot"></i>';
             
-            // 处理换行
-            const formattedContent = escapeHtml(content).replace(/\n/g, '<br>');
+            let formattedContent;
+            if (type === 'assistant') {
+                // AI回复使用Markdown渲染
+                try {
+                    formattedContent = marked.parse(content);
+                } catch (e) {
+                    // 如果Markdown解析失败，退回到简单处理
+                    formattedContent = escapeHtml(content).replace(/\n/g, '<br>');
+                }
+            } else {
+                // 用户消息简单处理
+                formattedContent = escapeHtml(content).replace(/\n/g, '<br>');
+            }
             
             messageDiv.innerHTML = `
                 <div class="message-avatar">${avatar}</div>
@@ -452,6 +553,13 @@
             
             messagesContainer.appendChild(messageDiv);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            
+            // 对代码块应用高亮
+            if (type === 'assistant') {
+                messageDiv.querySelectorAll('pre code').forEach((block) => {
+                    hljs.highlightElement(block);
+                });
+            }
         }
 
         function showTypingIndicator() {

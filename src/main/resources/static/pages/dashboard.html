@@ -229,6 +229,10 @@
             const content = document.getElementById('todayTaskContent');
             
             if (task && task.code === 200 && task.data) {
+                // 保存任务信息到全局变量，用于打卡
+                window.currentTask = task.data;
+                window.currentPlanId = planId;
+                
                 content.innerHTML = `
                     <div class="mb-2">
                         <span class="badge bg-light text-dark">第${task.data.dayNumber}天</span>
@@ -246,7 +250,7 @@
                 if (!task.data.isCompleted) {
                     const checkInBtn = document.getElementById('quickCheckIn');
                     checkInBtn.disabled = false;
-                    checkInBtn.onclick = () => quickCheckIn(planId, task.data.id);
+                    checkInBtn.onclick = () => quickCheckIn(planId, task.data.id, task.data.duration);
                 }
             } else {
                 content.innerHTML = '<p class="mb-0">今日没有任务或计划已结束</p>';
@@ -254,18 +258,21 @@
         }
         
         // 快速打卡
-        async function quickCheckIn(planId, detailId) {
+        async function quickCheckIn(planId, detailId, duration) {
+            // 使用任务设定的学习时长，而不是固定值
+            const studyHours = duration || 2;
+            
             const result = await apiRequest('/checkin', {
                 method: 'POST',
                 body: JSON.stringify({
                     planId: planId,
                     detailId: detailId,
-                    studyHours: 2
+                    studyHours: studyHours
                 })
             });
             
             if (result && result.code === 200) {
-                showToast('打卡成功！继续加油！🎉', 'success');
+                showToast(`打卡成功！今日学习${studyHours}小时，继续加油！🎉`, 'success');
                 loadDashboard();
             } else {
                 showToast(result?.message || '打卡失败', 'error');
