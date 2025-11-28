@@ -203,4 +203,26 @@ public class PlanController {
             return ApiResponse.error(e.getMessage());
         }
     }
+
+    /**
+     * 更新计划信息
+     */
+    @PutMapping("/{id}")
+    public ApiResponse<Void> updatePlan(@PathVariable Long id, @RequestBody Map<String, String> request,
+            HttpSession session) {
+        Long userId = (Long) session.getAttribute("userId");
+        if (userId == null) {
+            return ApiResponse.unauthorized("请先登录");
+        }
+
+        String title = request.get("title");
+        String goal = request.get("goal");
+        
+        try {
+            planService.updatePlan(id, userId, title, goal);
+            return ApiResponse.success("计划更新成功", null);
+        } catch (RuntimeException e) {
+            return ApiResponse.error(e.getMessage());
+        }
+    }
 }

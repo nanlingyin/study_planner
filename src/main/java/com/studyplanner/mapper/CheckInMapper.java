@@ -62,6 +62,12 @@ public interface CheckInMapper {
      */
     @Select("SELECT COALESCE(SUM(study_hours), 0) FROM check_in WHERE user_id = #{userId}")
     Double sumStudyHours(Long userId);
+
+    /**
+     * 统计用户某天的学习时长
+     */
+    @Select("SELECT SUM(study_hours) FROM check_in WHERE user_id = #{userId} AND check_date = #{date}")
+    Double sumStudyHoursByDate(@Param("userId") Long userId, @Param("date") LocalDate date);
     
     /**
      * 计算连续打卡天数
