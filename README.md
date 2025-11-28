@@ -16,7 +16,12 @@
 - **数据库**: MySQL 8.x
 - **LLM**: DeepSeek / 通义千问 / OpenAI (可配置)
 
-## 📁 项目结构
+## � 前端仓库
+
+本项目的前端 Vue 版本代码托管在：
+[https://github.com/NIIT-workshop-of-SHZU/study-planner-frontend](https://github.com/NIIT-workshop-of-SHZU/study-planner-frontend)
+
+## �📁 项目结构
 
 ```
 study-planner/
@@ -112,23 +117,30 @@ mvn spring-boot:run
 | 成员E | 数据库、打卡系统 |
 | 成员F | 测试、文档、答辩 |
 
-## 📝 开发日志
+## 📝 开发日志 (Changelog)
 
-- 2025-11-25: 项目初始化，完成框架搭建，完成计划清单，初步工作分配
-- 2025-11-26: 
-  - **fix:** SQL初始化脚本编码问题，添加 `SET NAMES utf8mb4` 解决中文乱码
-  - **fix:** SQL初始化脚本表删除顺序问题，添加 `SET FOREIGN_KEY_CHECKS = 0` 避免外键约束错误
-  - **fix:** SQL初始化脚本DEFAULT值语法错误，移除带DEFAULT的字段的NOT NULL约束
-  - **fix:** 个人资料页面API路径重复问题 (`/api/api/...` -> `/api/...`)
-  - **fix:** 文件上传路径错误，头像保存到Tomcat临时目录的问题，改用项目绝对路径
-  - **fix:** 打卡学习时长固定为2小时的问题，现在使用计划设定的每日学习时长
-  - **fix:** AI助手输出渲染问题，添加Markdown解析和代码高亮支持
-  - **add:** 用户头像上传功能 (`POST /api/user/avatar`)
-  - **add:** 个人资料编辑功能 (`PUT /api/user/profile`)
-  - **add:** 密码修改功能 (`PUT /api/user/password`)
-  - **add:** 个人资料管理页面 (`/pages/profile.html`)
-  - **add:** 文件上传配置类 `FileUploadConfig.java`
-  - **add:** 文件上传服务 `FileUploadService.java`
+### 2025-11-26
+#### ✨ 新增特性 (Added)
+- 用户头像上传功能 (`POST /api/user/avatar`)
+- 个人资料编辑功能 (`PUT /api/user/profile`)
+- 密码修改功能 (`PUT /api/user/password`)
+- 个人资料管理页面 (`/pages/profile.html`)
+- 文件上传配置类 `FileUploadConfig.java`
+- 文件上传服务 `FileUploadService.java`
+
+#### 🐛 问题修复 (Fixed)
+- **SQL脚本**: 修复初始化脚本编码问题(utf8mb4)、表删除顺序及DEFAULT值语法错误
+- **API路径**: 修复个人资料页面API路径重复问题 (`/api/api/...` -> `/api/...`)
+- **文件上传**: 修复头像保存路径问题，改用项目绝对路径
+- **打卡功能**: 修复打卡学习时长固定为2小时的问题，现已同步计划设定时长
+- **AI助手**: 修复输出渲染问题，添加Markdown解析和代码高亮支持
+
+### 2025-11-25
+#### 🎉 初始化 (Init)
+- 项目初始化，完成框架搭建 (Spring Boot + MyBatis + MySQL)
+- 完成数据库设计和 `init.sql` 编写
+- 完成计划清单制定
+- 确定团队分工
 
 
 - ## 计划清单
