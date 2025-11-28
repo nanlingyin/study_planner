@@ -52,7 +52,14 @@ public class PlanService {
         // 创建计划
         StudyPlan plan = new StudyPlan();
         plan.setUserId(userId);
-        plan.setTitle(request.getTitle() != null ? request.getTitle() : planJson.getString("title"));
+        
+        // 处理标题：如果用户未提供或为空，则使用LLM生成的标题
+        String title = request.getTitle();
+        if (title == null || title.trim().isEmpty()) {
+            title = planJson.getString("title");
+        }
+        plan.setTitle(title);
+        
         plan.setGoal(request.getGoal());
         plan.setLevel(request.getLevel());
         plan.setDailyHours(request.getDailyHours());
@@ -133,9 +140,24 @@ public class PlanService {
      * 获取用户的所有计划
      */
     public List<StudyPlan> getUserPlans(Long userId) {
-        return planMapper.findByUserId(userId);
+        List<StudyPlan> plans = planMapper.findByUserId(userId);
+        // 计算每个计划的进度
+        for (StudyPlan plan : plans) {
+            plan.setProgress(getPlanProgress(plan.getId()));
+        }
+        return plans;
     }
     
+    /**
+     * 更新计划信息
+     */
+    public void updatePlan(Long planId, Long userId, String title, String goal) {
+        StudyPlan plan = validatePlanOwner(planId, userId);
+        plan.setTitle(title);
+        plan.setGoal(goal);
+        planMapper.update(plan);
+    }
+
     /**
      * 获取计划详情（包含每日任务）
      */

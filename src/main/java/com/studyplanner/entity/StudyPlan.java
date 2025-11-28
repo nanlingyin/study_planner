@@ -70,4 +70,9 @@ public class StudyPlan {
      * 更新时间
      */
     private LocalDateTime updateTime;
+    
+    /**
+     * 进度(百分比) - 非数据库字段
+     */
+    private Double progress;
 }

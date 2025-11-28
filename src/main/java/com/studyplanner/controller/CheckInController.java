@@ -95,6 +95,20 @@ public class CheckInController {
         Map<String, Object> stats = checkInService.getStudyStats(userId);
         return ApiResponse.success(stats);
     }
+
+    /**
+     * 获取图表数据
+     */
+    @GetMapping("/chart-data")
+    public ApiResponse<Map<String, Object>> getChartData(HttpSession session) {
+        Long userId = (Long) session.getAttribute("userId");
+        if (userId == null) {
+            return ApiResponse.unauthorized("请先登录");
+        }
+
+        Map<String, Object> chartData = checkInService.getChartData(userId);
+        return ApiResponse.success(chartData);
+    }
     
     /**
      * 获取月度打卡数据（日历视图）

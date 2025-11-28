@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -120,5 +121,58 @@ public class CheckInService {
         stats.put("streakDays", getStreakDays(userId));
         
         return stats;
+    }
+
+    /**
+     * 获取图表数据（本周和本月）
+     */
+    public Map<String, Object> getChartData(Long userId) {
+        Map<String, Object> result = new HashMap<>();
+        LocalDate today = LocalDate.now();
+
+        // 本周数据
+        Map<String, Object> weekData = new HashMap<>();
+        List<String> weekXAxis = new ArrayList<>();
+        List<Double> weekSeries = new ArrayList<>();
+        
+        // 获取本周一
+        LocalDate monday = today.minusDays(today.getDayOfWeek().getValue() - 1);
+        for (int i = 0; i < 7; i++) {
+            LocalDate date = monday.plusDays(i);
+            weekXAxis.add(getDayOfWeekCN(date.getDayOfWeek().getValue()));
+            Double hours = checkInMapper.sumStudyHoursByDate(userId, date);
+            weekSeries.add(hours != null ? hours : 0.0);
+        }
+        weekData.put("xAxis", weekXAxis);
+        weekData.put("series", weekSeries);
+        result.put("week", weekData);
+
+        // 本月数据
+        Map<String, Object> monthData = new HashMap<>();
+        List<String> monthXAxis = new ArrayList<>();
+        List<Double> monthSeries = new ArrayList<>();
+        
+        // 获取本月每一天
+        LocalDate firstDay = today.withDayOfMonth(1);
+        int daysInMonth = today.lengthOfMonth();
+        
+        // 为了图表美观，如果天数太多，可以每隔几天取一个点，或者全部返回
+        // 这里简单起见，返回所有天数
+        for (int i = 0; i < daysInMonth; i++) {
+            LocalDate date = firstDay.plusDays(i);
+            monthXAxis.add(date.getDayOfMonth() + "日");
+            Double hours = checkInMapper.sumStudyHoursByDate(userId, date);
+            monthSeries.add(hours != null ? hours : 0.0);
+        }
+        monthData.put("xAxis", monthXAxis);
+        monthData.put("series", monthSeries);
+        result.put("month", monthData);
+
+        return result;
+    }
+
+    private String getDayOfWeekCN(int value) {
+        String[] days = {"周一", "周二", "周三", "周四", "周五", "周六", "周日"};
+        return days[value - 1];
     }
 }
