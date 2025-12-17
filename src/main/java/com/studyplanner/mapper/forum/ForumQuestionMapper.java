@@ -5,16 +5,9 @@ import org.apache.ibatis.annotations.*;
 
 import java.util.List;
 
-/**
- * 论坛问题/帖子 Mapper（对应表：forum_question）
- */
 @Mapper
 public interface ForumQuestionMapper {
 
-    /**
-     * 发帖：插入问题（用于 POST /api/forum/question）
-     * 由 DB 写入 create_time / update_time（NOW()）
-     */
     @Insert("INSERT INTO forum_question " +
             "(author_id, title, content, anonymous, view_count, answer_count, follow_count, create_time, update_time) " +
             "VALUES " +
@@ -22,23 +15,41 @@ public interface ForumQuestionMapper {
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insert(ForumQuestion question);
 
-    /**
-     * 问题详情（用于 GET /api/forum/question/{id}）
-     */
     @Select("SELECT * FROM forum_question WHERE id = #{id}")
     ForumQuestion findById(@Param("id") Long id);
 
-    /**
-     * 话题页：获取某话题下的问题列表（用于 GET /api/forum/topic/{id}/questions）
-     */
+    @Select({
+            "<script>",
+            "SELECT * FROM forum_question",
+            "<where>",
+            "  <if test='keyword != null and keyword != \"\"'>",
+            "    (title LIKE CONCAT('%', #{keyword}, '%') OR content LIKE CONCAT('%', #{keyword}, '%'))",
+            "  </if>",
+            "</where>",
+            "ORDER BY create_time DESC, id DESC",
+            "LIMIT #{limit} OFFSET #{offset}",
+            "</script>"
+    })
+    List<ForumQuestion> findLatest(
+            @Param("offset") int offset,
+            @Param("limit") int limit,
+            @Param("keyword") String keyword
+    );
+
     @Select("SELECT q.* FROM forum_question q " +
             "JOIN forum_question_topic qt ON q.id = qt.question_id " +
             "WHERE qt.topic_id = #{topicId} " +
-            "ORDER BY q.create_time DESC " +
+            "ORDER BY q.create_time DESC, q.id DESC " +
             "LIMIT #{limit} OFFSET #{offset}")
     List<ForumQuestion> findByTopicId(
             @Param("topicId") Long topicId,
             @Param("limit") int limit,
             @Param("offset") int offset
     );
+
+    @Update("UPDATE forum_question SET view_count = view_count + 1 WHERE id = #{id}")
+    int incrementViewCount(@Param("id") Long id);
+
+    @Update("UPDATE forum_question SET answer_count = answer_count + 1 WHERE id = #{id}")
+    int incrementAnswerCount(@Param("id") Long id);
 }

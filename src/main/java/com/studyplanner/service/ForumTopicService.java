@@ -1,7 +1,7 @@
 package com.studyplanner.service;
 
 import com.studyplanner.entity.ForumTopic;
-import com.studyplanner.mapper.ForumTopicMapper;
+import com.studyplanner.mapper.forum.ForumTopicMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -16,9 +16,7 @@ public class ForumTopicService {
     public List<Map<String, Object>> getHotTopics(int limit) {
         List<ForumTopic> topics = topicMapper.findHotTopics(limit);
         List<Map<String, Object>> result = new ArrayList<>();
-        for (ForumTopic t : topics) {
-            result.add(toTopicMap(t, false));
-        }
+        for (ForumTopic t : topics) result.add(toTopicMap(t, false));
         return result;
     }
 
@@ -27,11 +25,9 @@ public class ForumTopicService {
         int ps = (pageSize == null || pageSize < 1) ? 20 : pageSize;
         int offset = (p - 1) * ps;
 
-        List<ForumTopic> topics = topicMapper.findAll(offset, ps);
+        List<ForumTopic> topics = topicMapper.findAllPaged(offset, ps);
         List<Map<String, Object>> result = new ArrayList<>();
-        for (ForumTopic t : topics) {
-            result.add(toTopicMap(t, false));
-        }
+        for (ForumTopic t : topics) result.add(toTopicMap(t, false));
         return result;
     }
 
