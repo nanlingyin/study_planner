@@ -29,7 +29,7 @@ public class FileUploadService {
     );
     
     // 最大文件大小：5MB
-    private static final long MAX_FILE_SIZE = 5 * 1024 * 1024;
+    private static final long MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
     
     /**
      * 上传头像

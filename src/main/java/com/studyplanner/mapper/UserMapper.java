@@ -3,6 +3,8 @@ package com.studyplanner.mapper;
 import com.studyplanner.entity.User;
 import org.apache.ibatis.annotations.*;
 
+import java.util.List;
+
 /**
  * 用户Mapper接口
  */
@@ -52,4 +54,22 @@ public interface UserMapper {
      */
     @Update("UPDATE user SET password = #{password}, update_time = NOW() WHERE id = #{id}")
     int updatePassword(@Param("id") Long id, @Param("password") String password);
+
+    @Select({
+            "<script>",
+            "SELECT * FROM user",
+            "<where>",
+            "  <if test='keyword != null and keyword != \"\"'>",
+            "    (username LIKE CONCAT('%', #{keyword}, '%') OR email LIKE CONCAT('%', #{keyword}, '%'))",
+            "  </if>",
+            "</where>",
+            "ORDER BY id DESC",
+            "LIMIT #{limit} OFFSET #{offset}",
+            "</script>"
+    })
+    List<User> searchUsers(
+            @Param("keyword") String keyword,
+            @Param("offset") int offset,
+            @Param("limit") int limit
+    );
 }

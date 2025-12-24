@@ -104,7 +104,7 @@ mvn spring-boot:run
 - `PUT /api/user/password` - 修改密码
 
 ### 计划接口
-- `POST /api/plan/generate` - AI生成计划
+- `POST /api/plan/generate` - AI生成计划（支持中英文输入）
 - `GET /api/plan/list` - 获取计划列表
 - `GET /api/plan/{id}` - 获取计划详情
 - `DELETE /api/plan/{id}` - 删除计划
@@ -113,6 +113,27 @@ mvn spring-boot:run
 - `POST /api/checkin` - 打卡签到
 - `GET /api/checkin/stats` - 获取学习统计
 - `GET /api/checkin/calendar` - 获取日历数据
+
+### 论坛接口
+- `GET /api/forum/question` - 获取问题列表（支持分页、排序、筛选）
+- `GET /api/forum/question/{id}` - 获取问题详情
+- `POST /api/forum/question` - 创建问题
+- `PUT /api/forum/question/{id}` - 更新问题
+- `DELETE /api/forum/question/{id}` - 删除问题
+- `GET /api/forum/answer/{id}` - 获取回答详情
+- `POST /api/forum/answer` - 创建回答
+- `PUT /api/forum/answer/{id}` - 更新回答
+- `DELETE /api/forum/answer/{id}` - 删除回答
+- `POST /api/forum/answer/{id}/vote` - 点赞/取消点赞回答
+- `POST /api/forum/answer/{id}/collect` - 收藏/取消收藏回答
+- `GET /api/forum/comment` - 获取评论列表
+- `POST /api/forum/comment` - 创建评论
+- `GET /api/forum/topic` - 获取话题列表
+- `POST /api/forum/topic` - 创建话题
+- `GET /api/forum/search` - 搜索（问题/话题/用户）
+- `GET /api/forum/my/questions` - 获取我的提问
+- `GET /api/forum/my/answers` - 获取我的回答
+- `GET /api/forum/my/collections` - 获取我的收藏
 
 ## 👥 团队分工
 
@@ -126,6 +147,55 @@ mvn spring-boot:run
 | 成员F | 测试、文档、答辩 |
 
 ## 📝 开发日志 (Changelog)
+
+### 2025-12-24
+#### ✨ 新增特性 (Added)
+- **论坛功能完善**：
+  - **话题管理**：支持创建自定义话题，自动处理重复话题
+  - **用户内容管理**：新增"我的提问"、"我的回答"、"我的收藏"功能
+  - **搜索功能**：支持问题、话题、用户的多维度搜索
+  - **用户主页**：支持查看其他用户的提问、回答和收藏
+- **头像上传增强**：
+  - **文件大小限制**：提升至5MB
+  - **自动压缩**：大于1MB的图片自动压缩到2000x2000以内
+  - **1:1比例裁剪**：固定正方形裁剪，输出200x200像素
+  - **数据库同步**：上传成功后自动更新用户头像字段
+
+#### 🐛 问题修复 (Fixed)
+- **LLM服务优化**：
+  - 修复计划生成语言不匹配问题，支持纯英文输入时生成英文计划
+  - 加强语言约束性，使用"CRITICAL"和"MUST"等强调词汇
+  - 添加 `containsEnglish` 和 `containsChinese` 方法进行语言检测
+- **论坛功能修复**：
+  - 修复删除回答后问题回答数不减少的问题
+    - 在 `ForumQuestionMapper` 中添加 `decrementAnswerCount` 方法
+    - 在 `ForumAnswerService.deleteAnswer` 中调用减少回答数逻辑
+  - 修复"我的提问"页面无法显示的问题
+    - 确保 `ForumQuestionService.toQuestionMap` 返回 `author_id` 字段
+    - 修复前端函数名错误（`truncateQuestionContent` -> `truncateContent`）
+  - 修复"我的内容"页面一直加载的问题
+    - 改进错误处理，确保loading状态正确更新
+- **数据完整性**：
+  - 确保所有问题相关接口返回 `author_id` 字段，便于前端权限控制
+
+#### 📝 代码改进 (Improved)
+- **LLMService.java**：
+  - 优化 `buildPlanPrompt` 方法，根据输入语言动态调整提示词
+  - 英文输入时使用英文提示词，中文输入时使用中文提示词
+  - 加强语言约束，确保输出语言与输入语言一致
+- **ForumAnswerService.java**：
+  - 改进删除回答逻辑，确保关联数据正确更新
+- **ForumQuestionMapper.java**：
+  - 新增 `decrementAnswerCount` 方法，支持减少问题回答数
+- **ForumQuestionService.java**：
+  - 在 `toQuestionMap` 方法中确保返回 `author_id` 字段
+  - 改进数据转换逻辑，保证数据完整性
+
+#### 📋 修改文件列表
+- `main/src/main/java/com/studyplanner/service/LLMService.java`
+- `main/src/main/java/com/studyplanner/service/ForumAnswerService.java`
+- `main/src/main/java/com/studyplanner/service/ForumQuestionService.java`
+- `main/src/main/java/com/studyplanner/mapper/forum/ForumQuestionMapper.java`
 
 ### 2025-11-30
 #### ✨ 新增特性 (Added)
@@ -202,7 +272,7 @@ mvn spring-boot:run
 - ~~新增：删除/编辑计划功能~~✅ Completed (2025-11-26)
 - ~~"多学会儿"功能-考虑调整一天只能打卡一次的限制，提前学习打卡后续任务~~✅ Completed (2025-11-30)
 - ~~"闲置计划"提醒功能-超过3日未打卡该计划自动提醒~~✅ Completed (2025-11-30)
-- 学习论坛-供大家交流心得的平台(🚧 In Progress)
+- ~~学习论坛-供大家交流心得的平台~~ ✅ Completed (2025-12-24)
 - ~~新增用户个性化：头像上传、个人资料编辑~~ ✅ Completed (2025-11-26)
 - ~~学习进度可视化：周/月完成率图表~~✅ Completed (2025-11-28)
 - ~~考虑可以把已学习的内容左侧深蓝色色块-->绿色/其他颜色做一个颜色区分~~✅ Completed

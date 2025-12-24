@@ -228,14 +228,36 @@ public class LLMService {
      * 构建学习计划生成的Prompt
      */
     private String buildPlanPrompt(String goal, String level, double dailyHours, int totalDays) {
-        return String.format("""
-                你是一个专业的学习规划师，请根据以下信息生成一个详细的学习计划：
-                
-                【学习目标】：%s
-                【基础水平】：%s
-                【每日可用时间】：%.1f 小时
-                【计划周期】：%d 天
-                
+        // 检测用户输入是否为纯英文（检测所有输入字段）
+        // 如果goal和level都不包含中文，且至少有一个包含英文，则认为是英文输入
+        boolean goalHasChinese = containsChinese(goal);
+        boolean levelHasChinese = containsChinese(level);
+        boolean goalHasEnglish = containsEnglish(goal);
+        boolean levelHasEnglish = containsEnglish(level);
+        
+        // 如果都不包含中文，且至少有一个包含英文，则认为是英文输入
+        boolean isEnglishInput = !goalHasChinese && !levelHasChinese && (goalHasEnglish || levelHasEnglish);
+        String languageInstruction = isEnglishInput 
+            ? "CRITICAL LANGUAGE REQUIREMENT: The user's input is entirely in English. You MUST generate the ENTIRE study plan in English ONLY. This includes: title, summary, all daily content descriptions, and all resource names. DO NOT use any Chinese characters. If you use Chinese, the response will be considered incorrect. The output language MUST match the input language."
+            : "请使用中文生成学习计划。所有内容（标题、摘要、每日学习内容、推荐资源）都必须使用中文。";
+        
+        String formatInstruction = isEnglishInput
+            ? """
+                Please return the study plan in the following JSON format (ONLY JSON, no other content):
+                {
+                    "title": "Plan Title",
+                    "summary": "Plan Summary",
+                    "dailyPlans": [
+                        {
+                            "day": 1,
+                            "content": "Detailed description of today's learning content",
+                            "duration": %.1f,
+                            "resources": ["Resource 1", "Resource 2"]
+                        }
+                    ]
+                }
+                """
+            : """
                 请按照以下JSON格式返回学习计划（注意：只返回JSON，不要有其他内容）：
                 {
                     "title": "计划标题",
@@ -249,13 +271,65 @@ public class LLMService {
                         }
                     ]
                 }
-                
+                """;
+        
+        String requirements = isEnglishInput
+            ? """
+                Requirements:
+                1. The plan should be progressive, from basic to advanced
+                2. Daily content should be specific and actionable
+                3. Recommended resources should be practical (books, websites, videos, etc.)
+                4. Adjust difficulty and pace according to the base level
+                5. Generate a complete %d-day plan
+                """
+            : """
                 要求：
                 1. 计划要循序渐进，由浅入深
                 2. 每天的内容要具体可执行
                 3. 推荐的资源要实用（可以是书籍、网站、视频等）
                 4. 根据基础水平调整难度和进度
                 5. 生成完整的%d天计划
-                """, goal, level, dailyHours, totalDays, dailyHours, totalDays);
+                """;
+        
+        String roleInstruction = isEnglishInput
+            ? "You are a professional learning planner. Please generate a detailed study plan based on the following information:"
+            : "你是一个专业的学习规划师，请根据以下信息生成一个详细的学习计划：";
+        
+        String infoFormat = isEnglishInput
+            ? """
+                【Learning Goal】：%s
+                【Base Level】：%s
+                【Daily Available Time】：%.1f hours
+                【Plan Duration】：%d days
+                """
+            : """
+                【学习目标】：%s
+                【基础水平】：%s
+                【每日可用时间】：%.1f 小时
+                【计划周期】：%d 天
+                """;
+        
+        return String.format("%s\n\n%s\n\n%s\n\n%s\n\n%s", 
+            roleInstruction, 
+            String.format(infoFormat, goal, level, dailyHours, totalDays),
+            languageInstruction,
+            String.format(formatInstruction, dailyHours),
+            String.format(requirements, totalDays));
+    }
+    
+    /**
+     * 检测字符串是否包含中文字符
+     */
+    private boolean containsChinese(String str) {
+        if (str == null || str.isEmpty()) return false;
+        return str.chars().anyMatch(ch -> ch >= 0x4E00 && ch <= 0x9FFF);
+    }
+    
+    /**
+     * 检测字符串是否包含英文字符
+     */
+    private boolean containsEnglish(String str) {
+        if (str == null || str.isEmpty()) return false;
+        return str.chars().anyMatch(ch -> (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z'));
     }
 }
